@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 import com.koreaIT.java.am.util.DBUtil;
 import com.koreaIT.java.am.util.SecSql;
@@ -16,11 +14,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/article/list") // url매핑
-public class ArticleListServlet extends HttpServlet {
+@WebServlet("/article/delete") // url매핑
+public class ArticleDeleteServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
+		response.setContentType("text/html; charset=UTF-8;");
+		
+		int id = Integer.parseInt(request.getParameter("id"));
+		
 		Connection conn = null;
 
 		try {
@@ -29,14 +32,12 @@ public class ArticleListServlet extends HttpServlet {
 			conn = DriverManager.getConnection(url, "root", "");
 
 			SecSql sql = new SecSql();
-			sql.append("SELECT * FROM article");
-			sql.append("ORDER BY id DESC");
+			sql.append("DELETE FROM article");
+			sql.append("WHERE id = ?", id);
 			
-			List<Map<String, Object>> articleListMap = DBUtil.selectRows(conn, sql);
+			DBUtil.delete(conn, sql);
 			
-			request.setAttribute("articleListMap", articleListMap);
-			
-			request.getRequestDispatcher("/jsp/article/list.jsp").forward(request, response);
+			response.getWriter().append(String.format("<script>alert('%d번 게시물이 삭제되었습니다'); location.replace('list');</script>", id));
 			
 		} catch (ClassNotFoundException e) {
 			System.out.println("드라이버 로딩 실패");
