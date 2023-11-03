@@ -28,12 +28,44 @@ public class ArticleListServlet extends HttpServlet {
 			String url = "jdbc:mysql://127.0.0.1:3306/JSP_AM?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Seoul&useOldAliasMetadataBehavior=true&zeroDateTimeNehavior=convertToNull";
 			conn = DriverManager.getConnection(url, "root", "");
 
+			int page = 1;
+			
+			if (request.getParameter("page") != null) {
+				page = Integer.parseInt(request.getParameter("page"));
+			}
+			
+			int itemInAPage = 10;
+			
 			SecSql sql = new SecSql();
+			sql.append("SELECT COUNT(*) FROM article");
+			
+			int totalCnt = DBUtil.selectRowIntValue(conn, sql);
+			int totalPage = (int) Math.ceil((double) totalCnt / itemInAPage);
+			int limitFrom = (page - 1) * itemInAPage;
+			
+			int pageSize = 5;
+			
+			int from = page - pageSize;
+			if (from < 1) {
+				from = 1;
+			}
+			
+			int end = page + pageSize;
+			if (end > totalPage) {
+				end = totalPage;
+			}
+			
+			sql = new SecSql();
 			sql.append("SELECT * FROM article");
 			sql.append("ORDER BY id DESC");
+			sql.append("LIMIT ?, ?", limitFrom, itemInAPage);
 			
 			List<Map<String, Object>> articleListMap = DBUtil.selectRows(conn, sql);
 			
+			request.setAttribute("from", from);
+			request.setAttribute("end", end);
+			request.setAttribute("page", page);
+			request.setAttribute("totalPage", totalPage);
 			request.setAttribute("articleListMap", articleListMap);
 			
 			request.getRequestDispatcher("/jsp/article/list.jsp").forward(request, response);
